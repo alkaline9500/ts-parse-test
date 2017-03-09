@@ -1,60 +1,95 @@
-class Success<T> {
-    kind: "success";
-    contents: T;
+class ParseError {
+    kind: "ParseError" = "ParseError";
+    constructor(public justification: string) {}
+}
 
-    constructor(contents) {
-        this.contents = contents;
+type Type = "number" | "string" | "boolean";
+
+function checkType(o: string,
+    key: any,
+    expectedType: Type,
+): any {
+    if (typeof o[key] == expectedType) {
+        return o[key];
+    } else {
+        throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`);
     }
 }
 
-class Failure<T> {
-    kind: "failure";
-    justification: string;
+class Address {
+    kind: "Address" = "Address";
+    constructor(public streetNumber: number,
+        public streetName: string,
+        public isCommercial: boolean) { }
 
-    constructor(justification: string) {
-        this.justification = justification
+    public fullAddress(): string {
+        return `${this.isCommercial ? "(C)" : "(R)"} ${this.streetNumber} ${this.streetName}`
+    }
+
+    static parse(o: any): Address | ParseError {
+        try {
+            let streetNumber = checkType(o, "streetNumber", "number")
+            let streetName = checkType(o, "streetName", "string")
+            let isCommercial = checkType(o, "isComm", "boolean")
+            return new Address(streetNumber, streetName, isCommercial)
+        } catch (e) {
+            return new ParseError("Invalid Address: " + (e as Error).message);
+        }
     }
 }
-
-type ParseResult<T> = Success<T> | Failure<T>;
 
 class Person {
-    name: string;
-    age: number;
+    kind: "Person" = "Person";
 
-    constructor(name: string, age: number) {
-        this.name = name;
-        this.age = age;
-    }
+    constructor(public name: string,
+        public age: number,
+        public address: Address) { }
 
-    static parse(o: any): ParseResult<Person> {
-        // TODO: verify types and fail with justifications
-        // if (typeof(o.name) == "string") return new Failure<Person>("Person missing `name`")
-        // if (typeof(o.age) == "number") return new Failure<Person>("Person missing `number`")
-        return new Success<Person>(new Person(o.name, o.age));
+    static parse(o: any): Person | ParseError {
+        try {
+            let name = checkType(o, "name", "string");
+            let age = checkType(o, "age", "number");
+            let addressResult = Address.parse(o["address"])
+            var address = (() => {
+                switch (addressResult.kind) {
+                    case "Address":
+                        return addressResult
+                    case "ParseError":
+                        throw TypeError(addressResult.justification);
+                }
+            })();
+            return new Person(name, age, address);
+        } catch (e) {
+            return new ParseError("Invalid Person: " + (e as Error).message);
+        }
     }
 
     public greet(): string {
-        return `Hello ${this.name}, you are ${this.age} year(s) old`;
+        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${this.address.fullAddress()}`;
     }
 }
 
 let apiResp = {
     age: 22,
-    name: "Nic"
+    name: "Nic",
+    address: {
+        streetNumber: 120,
+        streetName: "East Ave",
+        isComm: "true"
+    }
 };
-let p: ParseResult<Person> = Person.parse(apiResp)
+
+let p = Person.parse(apiResp);
 
 let text = document.createElement('p');
 
-switch (p.kind) {
-    case "success":
-        text.textContent = p.contents.greet();
-        break;
-    case "failure":
-        text.textContent = p.justification;
-        break;
-    default:
-        text.textContent = "bad case: ";
-}
+text.textContent = (() => {
+    switch (p.kind) {
+        case "Person":
+            return p.greet();
+        case "ParseError":
+            return p.justification;
+    }
+})();
+
 document.body.appendChild(text);
