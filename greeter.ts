@@ -5,8 +5,8 @@ class ParseError {
 
 type Type = "number" | "string" | "boolean";
 
-function checkType(o: string,
-    key: any,
+function checkType(o: any,
+    key: string,
     expectedType: Type,
 ): any {
     if (typeof o[key] == expectedType) {
