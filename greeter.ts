@@ -52,7 +52,7 @@ class Person {
                 checkType(o, "name", "string"),
                 checkType(o, "age", "number"),
                 (() => {
-                    return checkType(o, "addresses", "array").map((addressObject) => {
+                    return checkType(o, "addresses", "array").map(addressObject => {
                         const addressResult = Address.parse(addressObject)
                         switch (addressResult.kind) {
                             case "Address":
@@ -62,7 +62,7 @@ class Person {
                                 console.log("Ignoring bad address: " + addressResult.justification);
                                 return null
                         }
-                    }).filter((a) => { return a != null;})
+                    }).filter(a => a != null)
                 })()
             );
         } catch (e) {
@@ -71,7 +71,7 @@ class Person {
     }
 
     public greet(): string {
-        const addresses = this.addresses.map((a) => { return a.fullAddress()}).join(", ")
+        const addresses = this.addresses.map(a => a.fullAddress()).join(", ")
         console.log(addresses)
         return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`
     }
