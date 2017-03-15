@@ -3,13 +3,14 @@ class ParseError {
     constructor(public justification: string) {}
 }
 
-type Type = "number" | "string" | "boolean";
+type Type = "number" | "string" | "boolean" | "array";
 
 function checkType(o: any,
     key: string,
     expectedType: Type,
 ): any {
-    if (typeof o[key] == expectedType) {
+    if (typeof o[key] == expectedType ||
+        (expectedType == "array" && Array.isArray(o[key]))) {
         return o[key];
     } else {
         throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`);
@@ -43,40 +44,54 @@ class Person {
 
     constructor(public name: string,
         public age: number,
-        public address: Address) { }
+        public addresses: Address[]) { }
 
     static parse(o: any): Person | ParseError {
         try {
-            let name = checkType(o, "name", "string");
-            let age = checkType(o, "age", "number");
-            let addressResult = Address.parse(o["address"])
-            var address = (() => {
-                switch (addressResult.kind) {
-                    case "Address":
-                        return addressResult
-                    case "ParseError":
-                        throw TypeError(addressResult.justification);
-                }
-            })();
-            return new Person(name, age, address);
+            return new Person(
+                checkType(o, "name", "string"),
+                checkType(o, "age", "number"),
+                (() => {
+                    return checkType(o, "addresses", "array").map((addressObject) => {
+                        const addressResult = Address.parse(addressObject)
+                        switch (addressResult.kind) {
+                            case "Address":
+                                return addressResult
+                            case "ParseError":
+                                // Return `null` to filter or throw to abort the entire Person
+                                console.log("Ignoring bad address: " + addressResult.justification);
+                                return null
+                        }
+                    }).filter((a) => { return a != null;})
+                })()
+            );
         } catch (e) {
             return new ParseError("Invalid Person: " + (e as Error).message);
         }
     }
 
     public greet(): string {
-        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${this.address.fullAddress()}`;
+        const addresses = this.addresses.map((a) => { return a.fullAddress()}).join(", ")
+        console.log(addresses)
+        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`
     }
 }
 
 let apiResp = {
     age: 22,
     name: "Nic",
-    address: {
-        streetNumber: 120,
-        streetName: "East Ave",
-        isComm: "true"
-    }
+    addresses: [
+        {
+            streetNumber: 120,
+            streetName: "East Ave",
+            isComm: true
+        },
+        {
+            streetNumber: 40,
+            streetName: "Lilac Dr",
+            isComm: false
+        }
+    ]
 };
 
 let p = Person.parse(apiResp);
