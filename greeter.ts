@@ -72,7 +72,6 @@ class Person {
 
     public greet(): string {
         const addresses = this.addresses.map(a => a.fullAddress()).join(", ")
-        console.log(addresses)
         return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`
     }
 }
