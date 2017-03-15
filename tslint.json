@@ -13,9 +13,5 @@
     "prefer-const": true,
     "semicolon": [true, "always"],
     "switch-default": false
-  },
-  "jsRules": {
-  },
-  "rulesDirectory": [
-  ]
+  }
 }
