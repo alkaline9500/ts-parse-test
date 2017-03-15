@@ -24,15 +24,15 @@ class Address {
         public isCommercial: boolean) { }
 
     public fullAddress(): string {
-        return `${this.isCommercial ? "(C)" : "(R)"} ${this.streetNumber} ${this.streetName}`
+        return `${this.isCommercial ? "(C)" : "(R)"} ${this.streetNumber} ${this.streetName}`;
     }
 
     static parse(o: any): Address | ParseError {
         try {
-            let streetNumber = checkType(o, "streetNumber", "number")
-            let streetName = checkType(o, "streetName", "string")
-            let isCommercial = checkType(o, "isComm", "boolean")
-            return new Address(streetNumber, streetName, isCommercial)
+            const streetNumber = checkType(o, "streetNumber", "number");
+            const streetName = checkType(o, "streetName", "string");
+            const isCommercial = checkType(o, "isComm", "boolean");
+            return new Address(streetNumber, streetName, isCommercial);
         } catch (e) {
             return new ParseError("Invalid Address: " + (e as Error).message);
         }
@@ -53,17 +53,17 @@ class Person {
                 checkType(o, "age", "number"),
                 (() => {
                     return checkType(o, "addresses", "array").map(addressObject => {
-                        const addressResult = Address.parse(addressObject)
+                        const addressResult = Address.parse(addressObject);
                         switch (addressResult.kind) {
                             case "Address":
-                                return addressResult
+                                return addressResult;
                             case "ParseError":
                                 // Return `null` to filter or throw to abort the entire Person
                                 console.log("Ignoring bad address: " + addressResult.justification);
-                                return null
+                                return null;
                         }
-                    }).filter(a => a != null)
-                })()
+                    }).filter(a => a != null);
+                })(),
             );
         } catch (e) {
             return new ParseError("Invalid Person: " + (e as Error).message);
@@ -71,8 +71,8 @@ class Person {
     }
 
     public greet(): string {
-        const addresses = this.addresses.map(a => a.fullAddress()).join(", ")
-        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`
+        const addresses = this.addresses.map(a => a.fullAddress()).join(", ");
+        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`;
     }
 }
 
@@ -83,19 +83,19 @@ let apiResp = {
         {
             streetNumber: 120,
             streetName: "East Ave",
-            isComm: true
+            isComm: true,
         },
         {
             streetNumber: 40,
             streetName: "Lilac Dr",
-            isComm: false
-        }
-    ]
+            isComm: false,
+        },
+    ],
 };
 
 let p = Person.parse(apiResp);
 
-let text = document.createElement('p');
+let text = document.createElement("p");
 
 text.textContent = (() => {
     switch (p.kind) {
