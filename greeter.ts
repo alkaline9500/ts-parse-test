@@ -52,7 +52,7 @@ class Person {
                 checkType(o, "name", "string"),
                 checkType(o, "age", "number"),
                 (() => {
-                    return checkType(o, "addresses", "array").map(addressObject => {
+                    return checkType(o, "addresses", "array").map((addressObject: any) => {
                         const addressResult = Address.parse(addressObject);
                         switch (addressResult.kind) {
                             case "Address":
@@ -62,7 +62,7 @@ class Person {
                                 console.log("Ignoring bad address: " + addressResult.justification);
                                 return null;
                         }
-                    }).filter(a => a != null);
+                    }).filter((a: Address | null) => a != null);
                 })(),
             );
         } catch (e) {
