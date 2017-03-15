@@ -5,13 +5,18 @@ class ParseError {
 
 type Type = "number" | "string" | "boolean" | "array";
 
-function checkType(o: any,
-    key: string,
-    expectedType: Type,
-): any {
-    if (typeof o[key] == expectedType ||
-        (expectedType == "array" && Array.isArray(o[key]))) {
+function itemIsType(o: any, expectedType: Type): boolean {
+    return typeof o == expectedType || (expectedType == "array" && Array.isArray(o));
+}
+
+function getObjectValue(o: any, key: string, expectedType: Type, defaultValue?: any): any {
+    if (itemIsType(o[key], expectedType)) {
         return o[key];
+    } else if (defaultValue != undefined) {
+        if (!itemIsType(defaultValue, expectedType)) {
+            throw TypeError(`default value is (${defaultValue}): ${typeof defaultValue}, expected ${expectedType}`);
+        }
+        return defaultValue;
     } else {
         throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`);
     }
@@ -29,9 +34,9 @@ class Address {
 
     static parse(o: any): Address | ParseError {
         try {
-            const streetNumber = checkType(o, "streetNumber", "number");
-            const streetName = checkType(o, "streetName", "string");
-            const isCommercial = checkType(o, "isComm", "boolean");
+            const streetNumber = getObjectValue(o, "streetNumber", "number");
+            const streetName = getObjectValue(o, "streetName", "string");
+            const isCommercial = getObjectValue(o, "isComm", "boolean");
             return new Address(streetNumber, streetName, isCommercial);
         } catch (e) {
             return new ParseError("Invalid Address: " + (e as Error).message);
@@ -49,10 +54,10 @@ class Person {
     static parse(o: any): Person | ParseError {
         try {
             return new Person(
-                checkType(o, "name", "string"),
-                checkType(o, "age", "number"),
+                getObjectValue(o, "name", "string", "John Doe"),
+                getObjectValue(o, "age", "number"),
                 (() => {
-                    return checkType(o, "addresses", "array").map((addressObject: any) => {
+                    return getObjectValue(o, "addresses", "array").map((addressObject: any) => {
                         const addressResult = Address.parse(addressObject);
                         switch (addressResult.kind) {
                             case "Address":
