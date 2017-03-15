@@ -14,7 +14,7 @@ function getObjectValue(o: any, key: string, expectedType: Type, defaultValue?: 
         return o[key];
     } else if (defaultValue != undefined) {
         if (!itemIsType(defaultValue, expectedType)) {
-            throw TypeError(`default value is (${defaultValue}): ${typeof defaultValue}, expected ${expectedType}`);
+            throw TypeError(`default value for key '${key}' is (${defaultValue}): ${typeof defaultValue}, expected ${expectedType}`);
         }
         return defaultValue;
     } else {
