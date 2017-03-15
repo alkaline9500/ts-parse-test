@@ -1,9 +1,9 @@
 class ParseError {
-    kind: "ParseError" = "ParseError";
+    kind: "ParseError" = "ParseError"
     constructor(public justification: string) {}
 }
 
-type Type = "number" | "string" | "boolean" | "array";
+type Type = "number" | "string" | "boolean" | "array"
 
 function checkType(o: any,
     key: string,
@@ -11,14 +11,14 @@ function checkType(o: any,
 ): any {
     if (typeof o[key] == expectedType ||
         (expectedType == "array" && Array.isArray(o[key]))) {
-        return o[key];
+        return o[key]
     } else {
-        throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`);
+        throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`)
     }
 }
 
 class Address {
-    kind: "Address" = "Address";
+    kind: "Address" = "Address"
     constructor(public streetNumber: number,
         public streetName: string,
         public isCommercial: boolean) { }
@@ -34,13 +34,13 @@ class Address {
             let isCommercial = checkType(o, "isComm", "boolean")
             return new Address(streetNumber, streetName, isCommercial)
         } catch (e) {
-            return new ParseError("Invalid Address: " + (e as Error).message);
+            return new ParseError("Invalid Address: " + (e as Error).message)
         }
     }
 }
 
 class Person {
-    kind: "Person" = "Person";
+    kind: "Person" = "Person"
 
     constructor(public name: string,
         public age: number,
@@ -59,14 +59,14 @@ class Person {
                                 return addressResult
                             case "ParseError":
                                 // Return `null` to filter or throw to abort the entire Person
-                                console.log("Ignoring bad address: " + addressResult.justification);
+                                console.log("Ignoring bad address: " + addressResult.justification)
                                 return null
                         }
                     }).filter(a => a != null)
                 })()
-            );
+            )
         } catch (e) {
-            return new ParseError("Invalid Person: " + (e as Error).message);
+            return new ParseError("Invalid Person: " + (e as Error).message)
         }
     }
 
@@ -92,19 +92,19 @@ let apiResp = {
             isComm: false
         }
     ]
-};
+}
 
-let p = Person.parse(apiResp);
+let p = Person.parse(apiResp)
 
-let text = document.createElement('p');
+let text = document.createElement('p')
 
 text.textContent = (() => {
     switch (p.kind) {
         case "Person":
-            return p.greet();
+            return p.greet()
         case "ParseError":
-            return p.justification;
+            return p.justification
     }
-})();
+})()
 
-document.body.appendChild(text);
+document.body.appendChild(text)
