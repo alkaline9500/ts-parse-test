@@ -54,15 +54,13 @@ class Person {
                 value: new Person(
                     getObjectValue(o, "name", "string", "John Doe"),
                     getObjectValue(o, "age", "number"),
-                    (() => {
-                        return getObjectValue(o, "addresses", "array")
-                            .map((addressObject: any) => {
-                                const addressResult = Address.parse(addressObject);
-                                // Return `null` to filter or throw to abort the entire Person
-                                return addressResult.success ? addressResult.value : null;
-                            })
-                            .filter((a: Address | null) => a != null);
-                    })(),
+                    getObjectValue(o, "addresses", "array")
+                        .map((addressObject: any) => {
+                            const addressResult = Address.parse(addressObject);
+                            // Return `null` to filter or throw to abort the entire Person
+                            return addressResult.success ? addressResult.value : null;
+                        })
+                        .filter((a: Address | null) => a != null),
                 ),
             };
         } catch (e) {
