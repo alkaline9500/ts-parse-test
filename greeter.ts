@@ -58,11 +58,8 @@ class Person {
                         return getObjectValue(o, "addresses", "array")
                             .map((addressObject: any) => {
                                 const addressResult = Address.parse(addressObject);
-                                if (addressResult.success) {
-                                    return addressResult.value;
-                                } else {
-                                    return null;
-                                }
+                                // Return `null` to filter or throw to abort the entire Person
+                                return addressResult.success ? addressResult.value : null;
                             })
                             .filter((a: Address | null) => a != null);
                     })(),
@@ -80,7 +77,7 @@ class Person {
 }
 
 let apiResp = {
-    age: "22",
+    age: 22,
     name: "Nic",
     addresses: [
         {
@@ -100,12 +97,6 @@ let p = Person.parse(apiResp);
 
 let text = document.createElement("p");
 
-text.textContent = (() => {
-    if (p.success) {
-        return p.value.greet();
-    } else {
-        return p.justification;
-    }
-})();
+text.textContent = p.success ? p.value.greet() : p.justification;
 
 document.body.appendChild(text);
