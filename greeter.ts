@@ -1,7 +1,6 @@
-class ParseError {
-    kind: "ParseError" = "ParseError";
-    constructor(public justification: string) {}
-}
+type ParseResult<T> =
+    { success: true, value: T } |
+    { success: false, justification: string };
 
 type Type = "number" | "string" | "boolean" | "array";
 
@@ -23,7 +22,6 @@ function getObjectValue(o: any, key: string, expectedType: Type, defaultValue?: 
 }
 
 class Address {
-    kind: "Address" = "Address";
     constructor(public streetNumber: number,
         public streetName: string,
         public isCommercial: boolean) { }
@@ -32,46 +30,46 @@ class Address {
         return `${this.isCommercial ? "(C)" : "(R)"} ${this.streetNumber} ${this.streetName}`;
     }
 
-    static parse(o: any): Address | ParseError {
+    static parse(o: any): ParseResult<Address> {
         try {
             const streetNumber = getObjectValue(o, "streetNumber", "number");
             const streetName = getObjectValue(o, "streetName", "string");
             const isCommercial = getObjectValue(o, "isComm", "boolean");
-            return new Address(streetNumber, streetName, isCommercial);
+            return { success: true, value: new Address(streetNumber, streetName, isCommercial) };
         } catch (e) {
-            return new ParseError("Invalid Address: " + (e as Error).message);
+            return { success: false, justification: "Invalid Address: " + (e as Error).message };
         }
     }
 }
 
 class Person {
-    kind: "Person" = "Person";
-
     constructor(public name: string,
         public age: number,
         public addresses: Address[]) { }
 
-    static parse(o: any): Person | ParseError {
+    static parse(o: any): ParseResult<Person> {
         try {
-            return new Person(
-                getObjectValue(o, "name", "string", "John Doe"),
-                getObjectValue(o, "age", "number"),
-                (() => {
-                    return getObjectValue(o, "addresses", "array").map((addressObject: any) => {
-                        const addressResult = Address.parse(addressObject);
-                        switch (addressResult.kind) {
-                            case "Address":
-                                return addressResult;
-                            case "ParseError":
-                                // Return `null` to filter or throw to abort the entire Person
-                                console.log("Ignoring bad address: " + addressResult.justification);
-                                return null;
-                        }
-                    }).filter((a: Address | null) => a != null);
-                })(),
-            );
+            return {
+                success: true,
+                value: new Person(
+                    getObjectValue(o, "name", "string", "John Doe"),
+                    getObjectValue(o, "age", "number"),
+                    (() => {
+                        return getObjectValue(o, "addresses", "array")
+                            .map((addressObject: any) => {
+                                const addressResult = Address.parse(addressObject);
+                                if (addressResult.success) {
+                                    return addressResult.value;
+                                } else {
+                                    return null;
+                                }
+                            })
+                            .filter((a: Address | null) => a != null);
+                    })(),
+                ),
+            };
         } catch (e) {
-            return new ParseError("Invalid Person: " + (e as Error).message);
+            return { success: false, justification: "Invalid Person: " + (e as Error).message };
         }
     }
 
@@ -82,7 +80,7 @@ class Person {
 }
 
 let apiResp = {
-    age: 22,
+    age: "22",
     name: "Nic",
     addresses: [
         {
@@ -103,11 +101,10 @@ let p = Person.parse(apiResp);
 let text = document.createElement("p");
 
 text.textContent = (() => {
-    switch (p.kind) {
-        case "Person":
-            return p.greet();
-        case "ParseError":
-            return p.justification;
+    if (p.success) {
+        return p.value.greet();
+    } else {
+        return p.justification;
     }
 })();
 
