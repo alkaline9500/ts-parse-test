@@ -8,11 +8,17 @@
     "member-access": false,
     "member-ordering": false,
     "no-console": false,
+    "no-string-literal": false,
+    "ordered-imports": false,
     "object-literal-sort-keys": false,
+    "quotemark": false,
+    "switch-default": false,
     "triple-equals": false,
     "arrow-return-shorthand": true,
+    "interface-name": [true, "never-prefix"],
+    "object-literal-key-quotes": [true, "as-needed"],
+    "object-literal-shorthand": false,
     "prefer-const": true,
-    "semicolon": [true, "always"],
-    "switch-default": false
+    "semicolon": [ true, "always" ]
   }
 }
