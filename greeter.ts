@@ -2,23 +2,94 @@ type ParseResult<T> =
     { success: true, value: T } |
     { success: false, justification: string };
 
-type Type = "number" | "string" | "boolean" | "object" | "array";
+function parseSuccess<T>(value: T): ParseResult<T> {
+    return { success: true, value: value };
+}
+
+function parseFailure<T>(justification: string): ParseResult<T> {
+    return { success: false, justification: justification };
+}
+
+type Type = "number" | "string" | "boolean" | "array";
 
 function itemIsType(o: any, expectedType: Type): boolean {
     return ({}).toString.call(o).match(/\s([a-zA-Z]+)/)[1].toLowerCase() == expectedType;
 }
 
-function getObjectValue(o: any, key: string, expectedType: Type, defaultValue?: any): any {
+function getObjectValue(o: any, key: string, expectedType: Type, allowNull: boolean): any {
     if (itemIsType(o[key], expectedType)) {
         return o[key];
-    } else if (defaultValue != undefined) {
-        if (!itemIsType(defaultValue, expectedType)) {
-            throw TypeError(`default value for key '${key}' is (${defaultValue}): ${typeof defaultValue}, expected ${expectedType}`);
-        }
-        return defaultValue;
+    } else if (allowNull) {
+        return null;
     } else {
         throw TypeError(`key '${key}' is (${o[key]}): ${typeof o[key]}, expected ${expectedType}`);
     }
+}
+
+function getString(o: any, key: string): string {
+    return getObjectValue(o, key, "string", false)
+}
+
+function getStringOrNull(o: any, key: string): string | null {
+    return getObjectValue(o, key, "string", true)
+}
+
+function getNumber(o: any, key: string): number {
+    return getObjectValue(o, key, "number", false)
+}
+
+function getNumberOrNull(o: any, key: string): number | null {
+    return getObjectValue(o, key, "number", true)
+}
+
+function getBoolean(o: any, key: string): boolean {
+    return getObjectValue(o, key, "boolean", false)
+}
+
+function getBooleanOrNull(o: any, key: string): boolean | null {
+    return getObjectValue(o, key, "boolean", true)
+}
+
+function getArray(o: any, key: string): any[] {
+    return getObjectValue(o, key, "array", false)
+}
+
+function getArrayOrNull(o: any, key: string): any[] | null {
+    return getObjectValue(o, key, "array", true)
+}
+
+function getSubobject<T>(o: any, key: string, parseFunction: (o: any) => ParseResult<T>): T {
+    const result = parseFunction(o[key]);
+    if (result.success) {
+        return result.value;
+    } else {
+        throw TypeError(`Invalid subobject at key '${key}': ${result.justification}`);
+    }
+}
+
+function getSubobjectOrNull<T>(o: any, key: string, parseFunction: (o: any) => ParseResult<T>): T | null {
+    const result = parseFunction(o[key]);
+    return result.success ? result.value : null;
+}
+
+function getArrayOfSubobjects<T>(o: any, key: string, parseFunction: (o: any) => ParseResult<T>, failBehavior: "ignore" | "warn" | "throw"): T[] {
+    return (getArrayOrNull(o, key) || [])
+        .map(elem => {
+            const result = parseFunction(elem);
+            if (result.success) {
+                return result.value;
+            } else {
+                if (failBehavior == "throw") {
+                    throw TypeError(`Invalid subobject: ${result.justification}`);
+                } else {
+                    if (failBehavior == "warn") {
+                        console.warn(`Ignoring invalid subobject: ${result.justification}`);
+                    }
+                    return null;
+                }
+            }
+        })
+        .filter(Boolean) as T[];
 }
 
 class Address {
@@ -32,56 +103,50 @@ class Address {
 
     static parse(o: any): ParseResult<Address> {
         try {
-            const streetNumber = getObjectValue(o, "streetNumber", "number");
-            const streetName = getObjectValue(o, "streetName", "string");
-            const isCommercial = getObjectValue(o, "isComm", "boolean");
-            return { success: true, value: new Address(streetNumber, streetName, isCommercial) };
+            return parseSuccess(new Address(
+                getNumber(o, "streetNumber"),
+                getString(o, "streetName"),
+                getBoolean(o, "isComm")
+            ));
         } catch (e) {
-            return { success: false, justification: "Invalid Address: " + e.message };
+            return parseFailure<Address>(`Invalid Address: ${e.message}`);
         }
     }
 }
 
 class Person {
     constructor(public name: string,
-        public age: number,
+        public age: number | null,
+        public primaryAddress: Address,
         public addresses: Address[]) { }
 
     static parse(o: any): ParseResult<Person> {
         try {
-            return {
-                success: true,
-                value: new Person(
-                    getObjectValue(o, "name", "string", "John Doe"),
-                    getObjectValue(o, "age", "number"),
-                    getObjectValue(o, "addresses", "array")
-                        .map((addressObject: any) => {
-                            const addressResult = Address.parse(addressObject);
-                            // Return `null` to filter or throw to abort the entire Person
-                            if (addressResult.success) {
-                                return addressResult.value;
-                            } else {
-                                console.warn("Ignoring invalid address: " + addressResult.justification);
-                                return null;
-                            }
-                        })
-                        .filter(Boolean),
-                ),
-            };
+            return parseSuccess(new Person(
+                getStringOrNull(o, "name") || "John Doe",
+                getNumber(o, "age"),
+                getSubobject(o, "primaryAddress", Address.parse),
+                getArrayOfSubobjects(o, "addresses", Address.parse, "warn"),
+            ));
         } catch (e) {
-            return { success: false, justification: "Invalid Person: " + e.message };
+            return parseFailure<Person>(`Invalid Person: ${e.message}`);
         }
     }
 
     public greet(): string {
         const addresses = this.addresses.map(a => a.fullAddress()).join(", ");
-        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${addresses}`;
+        return `Hello ${this.name}, you are ${this.age} year(s) old and you live at ${this.primaryAddress.fullAddress()} and also sometimes ${addresses}`;
     }
 }
 
 let apiResp = {
     age: 22,
     name: "Nic",
+    primaryAddress: {
+        streetNumber: 40,
+        streetName: "Lilac Dr",
+        isComm: false,
+    },
     addresses: [
         {
             streetNumber: 120,
@@ -89,8 +154,8 @@ let apiResp = {
             isComm: true,
         },
         {
-            streetNumber: 40,
-            streetName: "Lilac Dr",
+            streetNumber: 3762,
+            streetName: "Colliers Dr",
             isComm: false,
         },
     ],
