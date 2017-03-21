@@ -37,7 +37,7 @@ class Address {
             const isCommercial = getObjectValue(o, "isComm", "boolean");
             return { success: true, value: new Address(streetNumber, streetName, isCommercial) };
         } catch (e) {
-            return { success: false, justification: "Invalid Address: " + (e as Error).message };
+            return { success: false, justification: "Invalid Address: " + e.message };
         }
     }
 }
@@ -64,7 +64,7 @@ class Person {
                 ),
             };
         } catch (e) {
-            return { success: false, justification: "Invalid Person: " + (e as Error).message };
+            return { success: false, justification: "Invalid Person: " + e.message };
         }
     }
 
