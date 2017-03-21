@@ -95,6 +95,12 @@ let p = Person.parse(apiResp);
 
 let text = document.createElement("p");
 
-text.textContent = p.success ? p.value.greet() : p.justification;
+if (p.success) {
+    text.textContent = p.value.greet();
+    text.style.color = "green";
+} else {
+    text.textContent = p.justification;
+    text.style.color = "red";
+}
 
 document.body.appendChild(text);
