@@ -27,35 +27,35 @@ function getObjectValue(o: any, key: string, expectedType: Type, allowNull: bool
 }
 
 function getString(o: any, key: string): string {
-    return getObjectValue(o, key, "string", false)
+    return getObjectValue(o, key, "string", false);
 }
 
 function getStringOrNull(o: any, key: string): string | null {
-    return getObjectValue(o, key, "string", true)
+    return getObjectValue(o, key, "string", true);
 }
 
 function getNumber(o: any, key: string): number {
-    return getObjectValue(o, key, "number", false)
+    return getObjectValue(o, key, "number", false);
 }
 
 function getNumberOrNull(o: any, key: string): number | null {
-    return getObjectValue(o, key, "number", true)
+    return getObjectValue(o, key, "number", true);
 }
 
 function getBoolean(o: any, key: string): boolean {
-    return getObjectValue(o, key, "boolean", false)
+    return getObjectValue(o, key, "boolean", false);
 }
 
 function getBooleanOrNull(o: any, key: string): boolean | null {
-    return getObjectValue(o, key, "boolean", true)
+    return getObjectValue(o, key, "boolean", true);
 }
 
 function getArray(o: any, key: string): any[] {
-    return getObjectValue(o, key, "array", false)
+    return getObjectValue(o, key, "array", false);
 }
 
 function getArrayOrNull(o: any, key: string): any[] | null {
-    return getObjectValue(o, key, "array", true)
+    return getObjectValue(o, key, "array", true);
 }
 
 function getSubobject<T>(o: any, key: string, parseFunction: (o: any) => ParseResult<T>): T {
@@ -106,7 +106,7 @@ class Address {
             return parseSuccess(new Address(
                 getNumber(o, "streetNumber"),
                 getString(o, "streetName"),
-                getBoolean(o, "isComm")
+                getBoolean(o, "isComm"),
             ));
         } catch (e) {
             return parseFailure<Address>(`Invalid Address: ${e.message}`);
