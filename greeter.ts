@@ -58,9 +58,14 @@ class Person {
                         .map((addressObject: any) => {
                             const addressResult = Address.parse(addressObject);
                             // Return `null` to filter or throw to abort the entire Person
-                            return addressResult.success ? addressResult.value : null;
+                            if (addressResult.success) {
+                                return addressResult.value;
+                            } else {
+                                console.warn("Ignoring invalid address: " + addressResult.justification);
+                                return null;
+                            }
                         })
-                        .filter((a: Address | null) => a != null),
+                        .filter(Boolean),
                 ),
             };
         } catch (e) {
