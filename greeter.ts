@@ -2,10 +2,10 @@ type ParseResult<T> =
     { success: true, value: T } |
     { success: false, justification: string };
 
-type Type = "number" | "string" | "boolean" | "array";
+type Type = "number" | "string" | "boolean" | "object" | "array";
 
 function itemIsType(o: any, expectedType: Type): boolean {
-    return typeof o == expectedType || (expectedType == "array" && Array.isArray(o));
+    return ({}).toString.call(o).match(/\s([a-zA-Z]+)/)[1].toLowerCase() == expectedType;
 }
 
 function getObjectValue(o: any, key: string, expectedType: Type, defaultValue?: any): any {
